@@ -1,0 +1,178 @@
+Description: Fix dynamic linking with zsh-static and resulting segfaults on libc updates
+Origin: https://zsh.org/workers/49422
+Bug-Debian: https://bugs.debian.org/993843
+Bug: https://zsh.org/workers/49392
+Author: Axel Beckert <abe@debian.org>
+Author: Jun T <takimoto-j@kba.biglobe.ne.jp>
+
+diff --git a/Src/Modules/parameter.c b/Src/Modules/parameter.c
+index ef9148d7b..b44555323 100644
+--- a/Src/Modules/parameter.c
++++ b/Src/Modules/parameter.c
+@@ -2011,6 +2011,9 @@ scanpmdissaliases(HashTable ht, ScanFunc func, int flags)
+ /**/
+ static Groupset get_all_groups(void)
+ {
++#ifdef DISABLE_DYNAMIC_NSS
++    return NULL;
++#else
+     Groupset gs = zhalloc(sizeof(*gs));
+     Groupmap gaptr;
+     gid_t *list, *lptr, egid;
+@@ -2063,6 +2066,7 @@ static Groupset get_all_groups(void)
+     }
+ 
+     return gs;
++#endif /* DISABLE_DYNAMIC_NSS */
+ }
+ 
+ /* Standard hash element lookup. */
+@@ -2081,7 +2085,11 @@ getpmusergroups(UNUSED(HashTable ht), const char *name)
+     pm->gsu.s = &nullsetscalar_gsu;
+ 
+     if (!gs) {
++#ifdef DISABLE_DYNAMIC_NSS
++	zerr("parameter 'usergroups' not available: NSS is disabled");
++#else
+ 	zerr("failed to retrieve groups for user: %e", errno);
++#endif
+ 	pm->u.str = dupstring("");
+ 	pm->node.flags |= (PM_UNSET|PM_SPECIAL);
+ 	return &pm->node;
+@@ -2113,7 +2121,11 @@ scanpmusergroups(UNUSED(HashTable ht), ScanFunc func, int flags)
+     Groupmap gaptr;
+ 
+     if (!gs) {
++#ifdef DISABLE_DYNAMIC_NSS
++	zerr("parameter 'usergroups' not available: NSS is disabled");
++#else
+ 	zerr("failed to retrieve groups for user: %e", errno);
++#endif
+ 	return;
+     }
+ 
+diff --git a/Src/hashnameddir.c b/Src/hashnameddir.c
+index bed43d025..cbd1344ef 100644
+--- a/Src/hashnameddir.c
++++ b/Src/hashnameddir.c
+@@ -178,7 +178,7 @@ fillnameddirtable(UNUSED(HashTable ht))
+ 	    /* Using NIS or NIS+ didn't add any user directories. This seems
+ 	     * fishy, so we fall back to using getpwent(). If we don't have
+ 	     * that, we only use the passwd file. */
+-#ifdef HAVE_GETPWENT
++#ifdef USE_GETPWENT
+ 	    struct passwd *pw;
+ 
+ 	    setpwent();
+@@ -190,7 +190,7 @@ fillnameddirtable(UNUSED(HashTable ht))
+ 
+ 	    endpwent();
+ 	    usepwf = 0;
+-#endif /* HAVE_GETPWENT */
++#endif /* USE_GETPWENT */
+ 	}
+ 	if (usepwf) {
+ 	    /* Don't forget the non-NIS matches from the flat passwd file */
+@@ -229,7 +229,7 @@ fillnameddirtable(UNUSED(HashTable ht))
+ 	    adduserdir(pw->pw_name, pw->pw_dir, ND_USERNAME, 1);
+ 
+ 	endpwent();
+-#endif /* HAVE_GETPWENT */
++#endif /* USE_GETPWENT */
+ #endif
+ 	allusersadded = 1;
+     }
+diff --git a/Src/options.c b/Src/options.c
+index 783022591..a1fe918fc 100644
+--- a/Src/options.c
++++ b/Src/options.c
+@@ -811,7 +811,7 @@ dosetopt(int optno, int value, int force, char *new_opts)
+ 	    return -1;
+ 	}
+ 
+-# ifdef HAVE_INITGROUPS
++# ifdef USE_INITGROUPS
+ 	/* Set the supplementary groups list.
+ 	 *
+ 	 * Note that on macOS, FreeBSD, and possibly some other platforms,
+diff --git a/Src/params.c b/Src/params.c
+index 4f6b361f9..704aad588 100644
+--- a/Src/params.c
++++ b/Src/params.c
+@@ -843,9 +843,12 @@ createparamtable(void)
+     setsparam("HOST", ztrdup_metafy(hostnam));
+     zfree(hostnam, 256);
+ 
+-    setsparam("LOGNAME",
+-	      ztrdup_metafy((str = getlogin()) && *str ?
+-			    str : cached_username));
++    setsparam("LOGNAME", ztrdup_metafy(
++#ifndef DISABLE_DYNAMIC_NSS
++			(str = getlogin()) && *str ?  str :
++#endif
++				cached_username
++			));
+ 
+ #if !defined(HAVE_PUTENV) && !defined(USE_SET_UNSET_ENV)
+     /* Copy the environment variables we are inheriting to dynamic *
+@@ -4430,7 +4433,7 @@ usernamegetfn(UNUSED(Param pm))
+ void
+ usernamesetfn(UNUSED(Param pm), char *x)
+ {
+-#if defined(HAVE_SETUID) && defined(HAVE_GETPWNAM)
++#if defined(HAVE_SETUID) && defined(USE_GETPWNAM)
+     struct passwd *pswd;
+ 
+     if (x && (pswd = getpwnam(x)) && (pswd->pw_uid != cached_uid)) {
+@@ -4447,7 +4450,7 @@ usernamesetfn(UNUSED(Param pm), char *x)
+ 	    cached_uid = pswd->pw_uid;
+ 	}
+     }
+-#endif /* HAVE_SETUID && HAVE_GETPWNAM */
++#endif /* HAVE_SETUID && USE_GETPWNAM */
+     zsfree(x);
+ }
+ 
+diff --git a/Src/utils.c b/Src/utils.c
+index c32741ca7..a74c8bd2c 100644
+--- a/Src/utils.c
++++ b/Src/utils.c
+@@ -1119,7 +1119,7 @@ char *cached_username;
+ char *
+ get_username(void)
+ {
+-#ifdef HAVE_GETPWUID
++#ifdef USE_GETPWUID
+     struct passwd *pswd;
+     uid_t current_uid;
+ 
+@@ -1132,9 +1132,9 @@ get_username(void)
+ 	else
+ 	    cached_username = ztrdup("");
+     }
+-#else /* !HAVE_GETPWUID */
++#else /* !USE_GETPWUID */
+     cached_uid = getuid();
+-#endif /* !HAVE_GETPWUID */
++#endif /* !USE_GETPWUID */
+     return cached_username;
+ }
+ 
+@@ -1310,7 +1310,7 @@ getnameddir(char *name)
+ 	return str;
+     }
+ 
+-#ifdef HAVE_GETPWNAM
++#ifdef USE_GETPWNAM
+     {
+ 	/* Retrieve an entry from the password table/database for this user. */
+ 	struct passwd *pw;
+@@ -1326,7 +1326,7 @@ getnameddir(char *name)
+ 		return dupstring(pw->pw_dir);
+ 	}
+     }
+-#endif /* HAVE_GETPWNAM */
++#endif /* USE_GETPWNAM */
+ 
+     /* There are no more possible sources of directory names, so give up. */
+     return NULL;

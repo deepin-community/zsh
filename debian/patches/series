@@ -1,0 +1,9 @@
+further-mitigate-test-suite-hangs.patch
+update-debian-sections.patch
+cross-compile.diff
+example-shebang.patch
+completion-dscverify.diff
+cherry-pick-d128bc0b-45731-debsnap-new-completion-function.patch
+cherry-pick-754658af-Fix-copy-paste-error-in-earlier-commit-that-broke-git-stash-drop-completion.patch
+use-pager-instead-of-more-by-default.patch
+make-zsh-static-really-static-#993843.patch

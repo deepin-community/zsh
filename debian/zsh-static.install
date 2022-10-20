@@ -1,0 +1,2 @@
+debian/zsh5 bin
+obj-static/Src/zsh bin
