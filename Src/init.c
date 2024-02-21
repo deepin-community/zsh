@@ -248,7 +248,8 @@ static int restricted;
 
 /**/
 static void
-parseargs(char *zsh_name, char **argv, char **runscript, char **cmdptr)
+parseargs(char *zsh_name, char **argv, char **runscript, char **cmdptr,
+	  int *needkeymap)
 {
     char **x;
     LinkList paramlist;
@@ -265,7 +266,7 @@ parseargs(char *zsh_name, char **argv, char **runscript, char **cmdptr)
      * matched by code at the end of the present function.
      */
 
-    if (parseopts(zsh_name, &argv, opts, cmdptr, NULL, flags))
+    if (parseopts(zsh_name, &argv, opts, cmdptr, NULL, flags, needkeymap))
 	exit(1);
 
     /*
@@ -376,7 +377,7 @@ static void parseopts_setemulate(char *nam, int flags)
 /**/
 mod_export int
 parseopts(char *nam, char ***argvp, char *new_opts, char **cmdp,
-	  LinkList optlist, int flags)
+	  LinkList optlist, int flags, int *needkeymap)
 {
     int optionbreak = 0;
     int action, optno;
@@ -482,8 +483,14 @@ parseopts(char *nam, char ***argvp, char *new_opts, char **cmdp,
 		    return 1;
 		} else if (optno == RESTRICTED && toplevel) {
 		    restricted = action;
-		} else if ((optno == EMACSMODE || optno == VIMODE) && !toplevel) {
-		    WARN_OPTION("can't change option: %s", *argv);
+		} else if ((optno == EMACSMODE || optno == VIMODE)
+			   && (!toplevel || needkeymap)){
+		    if (!toplevel) {
+			WARN_OPTION("can't change option: %s", *argv);
+		    } else {
+			/* Need to wait for modules to be loadable */
+			*needkeymap = optno;
+		    }
 		} else {
 		    if (dosetopt(optno, action, toplevel, new_opts) &&
 			!toplevel) {
@@ -1035,7 +1042,6 @@ setupvals(char *cmd, char *runscript, char *zsh_name)
 #endif /* FPATH_NEEDS_INIT */
 
     mailpath = mkarray(NULL);
-    watch    = mkarray(NULL);
     psvar    = mkarray(NULL);
     module_path = mkarray(ztrdup(MODULE_DIR));
     modulestab = newmoduletable(17, "modules");
@@ -1222,7 +1228,7 @@ setupshin(char *runscript)
     /*
      * Finish setting up SHIN and its relatives.
      */
-    bshin = SHIN ? fdopen(SHIN, "r") : stdin;
+    shinbufalloc();
     if (isset(SHINSTDIN) && !SHIN && unset(INTERACTIVE)) {
 #ifdef _IONBF
 	setvbuf(stdin, NULL, _IONBF, 0);
@@ -1377,9 +1383,9 @@ init_misc(char *cmd, char *zsh_name)
 	dosetopt(RESTRICTED, 1, 0, opts);
     if (cmd) {
 	if (SHIN >= 10)
-	    fclose(bshin);
+	    close(SHIN);
 	SHIN = movefd(open("/dev/null", O_RDONLY | O_NOCTTY));
-	bshin = fdopen(SHIN, "r");
+	shinbufreset();
 	execstring(cmd, 0, 1, "cmdarg");
 	stopmsg = 1;
 	zexit((exit_pending || shell_exiting) ? exit_val : lastval, ZEXIT_NORMAL);
@@ -1402,7 +1408,6 @@ source(char *s)
     int tempfd = -1, fd, cj;
     zlong oldlineno;
     int oldshst, osubsh, oloops;
-    FILE *obshin;
     char *old_scriptname = scriptname, *us;
     char *old_scriptfilename = scriptfilename;
     unsigned char *ocs;
@@ -1419,7 +1424,6 @@ source(char *s)
 
     /* save the current shell state */
     fd        = SHIN;            /* store the shell input fd                  */
-    obshin    = bshin;          /* store file handle for buffered shell input */
     osubsh    = subsh;           /* store whether we are in a subshell        */
     cj        = thisjob;         /* store our current job number              */
     oldlineno = lineno;          /* store our current lineno                  */
@@ -1432,7 +1436,7 @@ source(char *s)
 
     if (!prog) {
 	SHIN = tempfd;
-	bshin = fdopen(SHIN, "r");
+	shinbufsave();
     }
     subsh  = 0;
     lineno = 1;
@@ -1500,10 +1504,10 @@ source(char *s)
     if (prog)
 	freeeprog(prog);
     else {
-	fclose(bshin);
+	close(SHIN);
 	fdtable[SHIN] = FDT_UNUSED;
 	SHIN = fd;		     /* the shell input fd                   */
-	bshin = obshin;		     /* file handle for buffered shell input */
+	shinbufrestore();
     }
     subsh = osubsh;                  /* whether we are in a subshell         */
     thisjob = cj;                    /* current job number                   */
@@ -1707,7 +1711,7 @@ zsh_main(UNUSED(int argc), char **argv)
 {
     char **t, *runscript = NULL, *zsh_name;
     char *cmd;			/* argument to -c */
-    int t0;
+    int t0, needkeymap = 0;
 #ifdef USE_LOCALE
     setlocale(LC_ALL, "");
 #endif
@@ -1753,7 +1757,7 @@ zsh_main(UNUSED(int argc), char **argv)
     createoptiontable();
     /* sets emulation, LOGINSHELL, PRIVILEGED, ZLE, INTERACTIVE,
      * SHINSTDIN and SINGLECOMMAND */ 
-    parseargs(zsh_name, argv, &runscript, &cmd);
+    parseargs(zsh_name, argv, &runscript, &cmd, &needkeymap);
 
     SHTTY = -1;
     init_io(cmd);
@@ -1762,6 +1766,15 @@ zsh_main(UNUSED(int argc), char **argv)
     init_signals();
     init_bltinmods();
     init_builtins();
+
+    if (needkeymap)
+    {
+	/* Saved for after module system initialisation */
+	zleentry(ZLE_CMD_SET_KEYMAP, needkeymap);
+	opts[needkeymap] = 1;
+	opts[needkeymap == EMACSMODE ? VIMODE : EMACSMODE] = 0;
+    }
+
     run_init_scripts();
     setupshin(runscript);
     init_misc(cmd, zsh_name);

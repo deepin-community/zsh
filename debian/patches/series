@@ -3,7 +3,10 @@ update-debian-sections.patch
 cross-compile.diff
 example-shebang.patch
 completion-dscverify.diff
-cherry-pick-d128bc0b-45731-debsnap-new-completion-function.patch
-cherry-pick-754658af-Fix-copy-paste-error-in-earlier-commit-that-broke-git-stash-drop-completion.patch
 use-pager-instead-of-more-by-default.patch
-make-zsh-static-really-static-#993843.patch
+fix-typos-in-man-pages.patch
+cherry-pick-3e3cfabc-revert-38150-and-fix-in-calling-function-cfp_matcher_range-instead.patch
+cherry-pick-4b7a9fd0-additional-typset--p--m-fix-for-namespaces.patch
+cherry-pick-b62e91134-51723-migrate-pcre-module-to-pcre2.patch
+cherry-pick-10bdbd8b-51877-do-not-build-pcre-module-if-pcre2-config-is-not-found.patch
+cherry-pick-ecd3f9c9-1057610-support-texinfo-7.0.patch

@@ -3,7 +3,7 @@ Depends: libcap-dev [linux-any],
          libelf-dev,
          libgdbm-dev,
          libncurses-dev,
-         libpcre3-dev,
+         libpcre2-dev,
          zsh,
          zsh-dev
 
@@ -12,7 +12,7 @@ Depends: libcap-dev [linux-any],
          libelf-dev,
          libgdbm-dev,
          libncurses-dev,
-         libpcre3-dev,
+         libpcre2-dev,
          zsh-static,
          zsh-dev
 

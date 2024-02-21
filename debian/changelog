@@ -1,3 +1,129 @@
+zsh (5.9-6) unstable; urgency=medium
+
+  * [c366ecc] Cherry pick upstream commit ecd3f9c9 to fix FTBFS issue with
+    newer texinfo (Closes: #1057610)
+
+ -- Michael Prokop <mika@debian.org>  Tue, 09 Jan 2024 11:15:01 +0100
+
+zsh (5.9-5) unstable; urgency=medium
+
+  * [138340f9,dc77864f] Cherry pick multiple (partial) upstream commits to
+    migrate zsh's pcre module to pcre2. Update Build-Depends, Build-Using
+    and debian/tests/control from libpcre3-dev to libpcre2-dev
+    accordingly. (Closes: #999918)
+
+ -- Axel Beckert <abe@debian.org>  Thu, 07 Sep 2023 01:17:01 +0200
+
+zsh (5.9-4) unstable; urgency=medium
+
+  * [76a48d6c] Enable gdbm module to be build again, this time via
+    --enable-gdbm. Thanks to András Korn for reporting this regression.
+    (Closes: #1030349)
+  * [b29a6be7] Bump my packaging copyright years in debian/copyright.
+
+ -- Axel Beckert <abe@debian.org>  Sun, 05 Feb 2023 01:37:45 +0100
+
+zsh (5.9-3) unstable; urgency=medium
+
+  * [50f17ad1] Cherry-pick upstream commit 3e3cfabc to fix a completion
+    regression with NO_CASE_GLOB in Zsh 5.9. Thanks to Vincent Lefèvre!
+    (Closes: #1013434)
+  * [c513a394] Declare compliance with Debian Policy 4.6.2. No other
+    changes were needed.
+  * [749f6b2d] Drop alternative build-dep on transitional package
+    bsdmainutils. Thanks to Lintian!
+
+ -- Axel Beckert <abe@debian.org>  Mon, 30 Jan 2023 02:13:43 +0100
+
+zsh (5.9-2) unstable; urgency=medium
+
+  [ Helmut Grohne ]
+  * [8dff29f4] Update /etc/shells using dpkg triggers (Closes: #1023317)
+
+  [ Axel Beckert ]
+  * [4cda7bc3] Update Helmut's patch to use more debhelper style file
+    installing.
+  * [27ee5df9] Bracketize and update lintian overrides where needed.
+
+ -- Axel Beckert <abe@debian.org>  Mon, 14 Nov 2022 01:38:14 +0100
+
+zsh (5.9-1) unstable; urgency=low
+
+  * [73d31738,d4d20348,2ae4a398] Import new upstream release 5.9.
+  * Retroactively set urgency=low in 5.8.1.2-test-2. This allows us to
+    upload 5.9-1 to unstable with urgency=low as well.
+  * [2af324df] Add patch to fix two typos in man pages found by Lintian
+  * [2e260363] Drop lintian override for hardening-no-fortify-functions,
+    no more needed.
+  * [05e8cdc5] Declare compliance with Debian Policy 4.6.1. No further
+    changes were needed.
+
+ -- Axel Beckert <abe@debian.org>  Sun, 15 May 2022 01:20:26 +0200
+
+zsh (5.8.1.3-test-1) experimental; urgency=low
+
+  * [32100208,9529af72,5615b53b] Import new upstream test release.
+    + [3b4287fe] Remove cherry-picked patches applied upstream
+
+ -- Axel Beckert <abe@debian.org>  Mon, 09 May 2022 04:11:56 +0200
+
+zsh (5.8.1.2-test-2) experimental; urgency=low
+
+  * [74ff1f90] Add patch from Jun T (50046) to export LANG when running
+    D07multibyte.ztst.
+
+ -- Axel Beckert <abe@debian.org>  Tue, 12 Apr 2022 13:10:26 +0200
+
+zsh (5.8.1.2-test-1) experimental; urgency=low
+
+  * [6e55c920,b09f4483,31bcc5c2] Import new upstream test release.
+    + [0d7f8889] 45524: Add completion for dscverify(1) from Debian's
+      devscripts.
+    + [58a869b6] Refresh patches as needed, remove patches applied
+      upstream.
+    + [2f368c0c] Update debian/zsh-dev.install to follow removal of
+      Src/Builtins/rlimit.h generation in 273da6cc.
+  * [c1805724] Install Etc/CVE-2021-45444-VCS_Info-workaround.patch into
+    zsh-doc. It is new since 5.8.1 and not relevant for Debian's package
+    but gives hints about CVE-2021-45444 mitigations on other platforms
+    which aren't updated yet.
+  * [5086b535] Replace dh overrides with execute_after_… where applicable.
+
+ -- Axel Beckert <abe@debian.org>  Mon, 11 Apr 2022 01:56:22 +0200
+
+zsh (5.8.1-1) unstable; urgency=high
+
+  * [1a490c705,12eb3e53,a13f7a2b] Import new upstream security and bugfix
+    release 5.8.1.
+    + [c187154f,fdb8b0ce,bdc4d70a] Fixes CVE-2021-45444, a vulnerability
+      in prompt expansion which could be exploited through e.g. VCS_Info
+      to execute arbitrary shell commands without a user's knowledge.
+    + [92d7d4dd] Refresh patches as needed. Drop cherry-picked patch with
+      commit 754658af, included in upstream bugfix release.
+  * [2556a97c] Drop debian/zsh-static.NEWS, zsh-static will stay. Thanks
+    to those who gave feedback about our proposed zsh-static removal back
+    in 2015, especially Vincent Bernat.
+  * [0fbb22e7] Extend zsh-static package description to explain its use
+    cases. Thanks to shirish शिरीष to make us aware of this deficency of
+    the package description by asking the right questions (back in
+    2015). :-)
+  * [daf87c89] zsh-static: Drop dep. on zsh, recommend zsh-common instead.
+  * [2f5cd2e1] Update lintian overrides wrt. to change tag formats.
+  * [cf14eeb5] Add lintian override for bash-term-in-posix-shell. It's zsh
+    code and it's guarded by a check if we're running zsh or not.
+  * [ca06fcef] Add lintian overrides for bin-sbin-mismatch false positives.
+  * [db8c6c1c] debian/zsh5: Add ${static} suffix also to alternative path
+    in warning.
+  * [dc50ace5] Update copyright years in debian/copyright. Thanks Lintian!
+  * [e872908c] debian/copyright: Remove obsolete upstream URLs. (FTP + SF)
+  * [60187dd3] debian/watch: Drop comment about FTP timeouts.
+  * [34379187] Make paths in lintian overrides agnostic to upstream versions
+  * [566bf8c1] Add lintian overrides for all occurrences of
+    very-long-line-length-in-source-file. They're all false positives.
+  * [32c07ee0] Update copyright years in debian/copyright. Thanks Lintian!
+
+ -- Axel Beckert <abe@debian.org>  Sat, 12 Feb 2022 23:00:09 +0100
+
 zsh (5.8-10) unstable; urgency=medium
 
   * [130801d2,92b60e43] Fix segfaults in zsh-static after glibc upgrades

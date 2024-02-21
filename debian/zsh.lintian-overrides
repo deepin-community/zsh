@@ -1,5 +1,11 @@
 # Only two of many files affected -> likely a false positive
-zsh: hardening-no-fortify-functions usr/lib*/zsh/*/zsh/zleparameter.so
-zsh: hardening-no-fortify-functions usr/lib/x86_64-linux-gnu/zsh/5.8/zsh/db/gdbm.so
+zsh: hardening-no-fortify-functions [usr/lib*/zsh/*/zsh/zleparameter.so]
 # Migration wrapper which is not meant to be used
-zsh: no-manual-page bin/zsh5
+zsh: no-manual-page [bin/zsh5]
+# Code either adding all path variants to /etc/shells or fixing
+# usrmerge crap which would not be in the maintainer scripts if we
+# could just simply ship those symlinks inside the .deb.
+zsh: bin-sbin-mismatch usr/bin/zsh -> bin/zsh [postinst]
+zsh: bin-sbin-mismatch usr/bin/zsh -> bin/zsh [postrm]
+# It's a comment.
+zsh: bin-sbin-mismatch usr/bin/zsh -> bin/zsh [bin/zsh5]
