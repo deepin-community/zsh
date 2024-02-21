@@ -4,9 +4,6 @@ set -e
 
 case "$1" in
 	(remove)
-	remove-shell /bin/zsh
-	remove-shell /usr/bin/zsh
-
 	# Remove hardcoded symlink again
 	if [ -L /usr/bin/zsh ]; then
 	  rm -f /usr/bin/zsh

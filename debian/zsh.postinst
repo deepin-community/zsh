@@ -12,9 +12,6 @@ update-alternatives --remove rzsh /bin/zsh5
 
 case "$1" in
     (configure)
-        add-shell /bin/zsh
-        add-shell /usr/bin/zsh
-
 	# New hardcoded symlinks which unfortunately can't be shipped inside
 	# the package itself since some people want to merge /bin and /usr/bin
 	# against FHS and all Unix tradition.

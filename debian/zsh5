@@ -15,7 +15,7 @@ if [[ "$0" == *zsh5* ]]; then
 
     echo ""
     echo "    ####"
-    echo "    ####  $0 is deprecated, please switch to /bin/zsh${static} (or /usr/bin/zsh)"
+    echo "    ####  $0 is deprecated, please switch to /bin/zsh${static} (or /usr/bin/zsh${static})"
     if [[ "$1" == "-l" || "$0" == -* ]]; then
         echo '    ####  Use "chsh -s '"/bin/zsh${static}"'" to change your login shell'
     fi

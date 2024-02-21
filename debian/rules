@@ -28,6 +28,7 @@ CONFIGFLAGS += --enable-site-fndir=/usr/local/share/zsh/site-functions
 CONFIGFLAGS += --enable-fndir=/usr/share/zsh/functions
 CONFIGFLAGS += --enable-runhelpdir=/usr/share/zsh/help
 CONFIGFLAGS += --with-tcsetpgrp
+CONFIGFLAGS += --enable-gdbm
 CONFIGFLAGS += --with-term-lib="ncursesw tinfo"
 CONFIGFLAGS += --enable-cap --enable-pcre
 CONFIGFLAGS += --enable-readnullcmd=pager
@@ -51,7 +52,7 @@ endif
 # resulting syntax might be invalid. Needed for packages which are
 # also provided by other packages like libncurses-dev and
 # libncursesw5-dev which both fulfil the according build-dependency.
-BUILT_USING=$(shell for pkg in libcap-dev libncurses-dev libpcre3-dev libc-dev-bin; do dpkg-query -f '$${status}' -W $$pkg 2>&1 | grep -Fq installed && dpkg-query -f '$${source:Package} (= $${source:Version}), ' -W $$pkg; done)
+BUILT_USING=$(shell for pkg in libcap-dev libncurses-dev libpcre2-dev libc-dev-bin; do dpkg-query -f '$${status}' -W $$pkg 2>&1 | grep -Fq installed && dpkg-query -f '$${source:Package} (= $${source:Version}), ' -W $$pkg; done)
 
 %:
 	dh $@
@@ -128,9 +129,7 @@ override_dh_installexamples-indep:
 	sed -i -e '1!b;s:^#!.*[ /]zsh:#!/bin/zsh:;s#/usr/local/bin#/usr/bin#' \
 	   debian/zsh-common/usr/share/doc/zsh-common/examples/Misc/*
 
-override_dh_install-indep:
-	dh_install -i
-
+execute_after_dh_install-indep:
 # Doesn't this need to go before we zcompile stuff into .zwc files? -- Axel
 	sed -i -e '1!b;s:^#!.*[ /]zsh:#!/bin/zsh:;s#/usr/local/bin#/usr/bin#;' \
 		`find debian/zsh-common/usr/share/zsh/functions -type f`
@@ -148,13 +147,10 @@ override_dh_shlibdeps-arch:
 		-dDepends    debian/zsh/bin/*   \
 		-dRecommends debian/zsh/usr/lib/*/zsh/*/zsh/*.so
 
-override_dh_installdocs-arch:
-	dh_installdocs -a
+execute_after_dh_installdocs-arch:
 	awk 'BEGIN { print "The following modules are statically-compiled into the static zsh binary:\n"; } /link=static/ { printf "%s (%s %s)\n", substr($$1,6), $$4, $$5; }' obj-static/config.modules >debian/zsh-static/usr/share/doc/zsh-static/README.Debian
 
-override_dh_install-arch:
-	dh_install -a
-
+execute_after_dh_install-arch:
 	mv debian/zsh-static/bin/zsh  debian/zsh-static/bin/zsh-static
 	mv debian/zsh-static/bin/zsh5 debian/zsh-static/bin/zsh5-static
 	sed -e 's:#!/bin/zsh:#!/bin/zsh-static:' -i debian/zsh-static/bin/zsh5-static

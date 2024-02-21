@@ -7,7 +7,7 @@ Author: Axel Beckert <abe@debian.org>
 
 --- a/Completion/Base/Widget/_complete_debug
 +++ b/Completion/Base/Widget/_complete_debug
-@@ -24,7 +24,7 @@
+@@ -28,7 +28,7 @@
  
    if (( debug_fd != -1 )); then
      zstyle -s ':completion:complete-debug::::' pager pager
@@ -73,14 +73,14 @@ Author: Axel Beckert <abe@debian.org>
  	case ${what[(w)1]} in
 --- a/Functions/Misc/run-help-svk
 +++ b/Functions/Misc/run-help-svk
-@@ -1 +1 @@
--svk help ${${@:#-*}[1]} | ${=PAGER:-more}
-+svk help ${${@:#-*}[1]} | ${=PAGER:-/usr/bin/pager}
+@@ -1,1 +1,1 @@
+-svk help $1 | ${=PAGER:-more}
++svk help $1 | ${=PAGER:-/usr/bin/pager}
 --- a/Functions/Misc/run-help-svn
 +++ b/Functions/Misc/run-help-svn
-@@ -1 +1 @@
--svn help ${${@:#-*}[1]} | ${=PAGER:-more}
-+svn help ${${@:#-*}[1]} | ${=PAGER:-/usr/bin/pager}
+@@ -1,1 +1,1 @@
+-svn help $1 | ${=PAGER:-more}
++svn help $1 | ${=PAGER:-/usr/bin/pager}
 --- a/Functions/Zftp/zfdir
 +++ b/Functions/Zftp/zfdir
 @@ -95,15 +95,15 @@

@@ -5,6 +5,3 @@ https://www.zsh.org/pub/zsh-(\d[^\sd]*)\.(?:tgz|tbz2|txz|tar\.(?:gz|bz2|xz))
 # release candidate scanning commented due to #819170, #827814 and #841499
 #opts="pgpsigurlmangle=s/$/.asc/" \
 #https://www.zsh.org/pub/development/zsh-(\d[^\sd]*)\.(?:tgz|tbz2|txz|tar\.(?:gz|bz2|xz))
-
-# ftp.zsh.org produced timeout again
-# Bart Martens <bartm@debian.org>  Sat, 05 Jan 2013 08:58:36 +0000
